@@ -13,10 +13,11 @@ import { Separator } from "@/components/ui/separator";
 
 
 export default function DashboardPage() {
-    const [activeTab, setActiveTab] = useState<"products" | "profile">("products");
+    const [activeTab, setActiveTab] = useState<"products" | "orders" | "profile">("products");
     const [user, setUser] = useState<any>(null);
     const [artisan, setArtisan] = useState<any>(null);
     const [products, setProducts] = useState<any[]>([]);
+    const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isEditingProfile, setIsEditingProfile] = useState(false);
     const [editForm, setEditForm] = useState({ name: "", craft_type: "", location: "", bio: "" });
@@ -48,6 +49,12 @@ export default function DashboardPage() {
                     if (prodRes.ok) {
                         const prodData = await prodRes.json();
                         setProducts(prodData.products || []);
+                    }
+
+                    const ordRes = await fetch(`${baseUrl}/api/orders/artisan/${parsedUser.id}`);
+                    if (ordRes.ok) {
+                        const ordData = await ordRes.json();
+                        setOrders(ordData.orders || []);
                     }
                 } catch (error) {
                     console.error("Failed to load artisan dashboard data:", error);
@@ -170,7 +177,7 @@ export default function DashboardPage() {
                     <div className="mt-8 grid grid-cols-3 gap-4 max-w-sm">
                         {[
                             { value: products.length, label: "Products" },
-                            { value: 0, label: "Orders" },
+                            { value: orders.length, label: "Orders" },
                             { value: artisan.rating, label: "Rating" },
                         ].map((stat) => (
                             <div key={stat.label} className="text-center p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10">
@@ -185,7 +192,7 @@ export default function DashboardPage() {
             {/* Tabs */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="flex gap-1 mb-8 border-b border-border text-sm overflow-x-auto custom-scrollbar">
-                    {(["products", "profile"] as const).map((tab) => (
+                    {(["products", "orders", "profile"] as const).map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
@@ -194,7 +201,7 @@ export default function DashboardPage() {
                                 : "border-transparent text-muted-foreground hover:text-foreground"
                                 }`}
                         >
-                            {tab === "products" ? "My Products" : "Profile Settings"}
+                            {tab === "products" ? "My Products" : tab === "orders" ? "My Orders" : "Profile Settings"}
                         </button>
                     ))}
                 </div>
@@ -246,6 +253,67 @@ export default function DashboardPage() {
                                         List Your First Product
                                     </Button>
                                 </Link>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Orders Tab */}
+                {activeTab === "orders" && (
+                    <div className="space-y-4">
+                        {orders.map((order) => (
+                            <div
+                                key={order.order_id || order.id}
+                                className="flex flex-col gap-4 p-5 rounded-xl border border-border bg-card shadow-sm"
+                            >
+                                <div className="flex items-start justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-lg">
+                                            #{(order.order_id || order.id || "").slice(0, 4).toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold text-base">{order.order_items?.[0]?.products?.title || "Unknown Product"}</h3>
+                                            <p className="text-sm text-muted-foreground mt-0.5">
+                                                Ordered on {new Date(order.created_at).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-semibold text-lg text-primary">₹{order.total_amount?.toLocaleString("en-IN") || order.amount?.toLocaleString("en-IN") || 0}</p>
+                                        <Badge variant={order.payment_status === "pending" || order.status === "pending" ? "secondary" : "default"} className="mt-1 capitalize">
+                                            {order.payment_status || order.status || "Pending"}
+                                        </Badge>
+                                    </div>
+                                </div>
+
+                                <Separator />
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <p className="font-medium mb-1">Buyer Information</p>
+                                        <p className="text-muted-foreground">{order.buyer_name || order.users?.name || "Guest Buyer"}</p>
+                                        <p className="text-muted-foreground">{order.buyer_email || order.users?.email}</p>
+                                        {order.buyer_phone && <p className="text-muted-foreground">Phone: {order.buyer_phone}</p>}
+                                    </div>
+                                    {order.message && (
+                                        <div>
+                                            <p className="font-medium mb-1">Delivery Address & Message</p>
+                                            <p className="text-muted-foreground whitespace-pre-line">{order.message}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+
+                        {orders.length === 0 && (
+                            <div className="text-center py-20 px-4 border border-dashed border-border rounded-2xl bg-muted/30">
+                                <div className="inline-flex w-16 h-16 rounded-full bg-primary/10 items-center justify-center text-primary text-2xl mb-4">
+                                    📦
+                                </div>
+                                <h3 className="text-lg font-semibold mb-2">No orders yet</h3>
+                                <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+                                    When customers place orders for your crafts, their details and shipping information will appear here!
+                                </p>
                             </div>
                         )}
                     </div>

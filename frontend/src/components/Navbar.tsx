@@ -71,6 +71,14 @@ export default function Navbar() {
                                 </Link>
                             </>
                         )}
+                        {user && user.role !== "artisan" && (
+                            <Link
+                                href="/buyer/dashboard"
+                                className="px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent transition-colors"
+                            >
+                                My Orders
+                            </Link>
+                        )}
                     </nav>
 
                     {/* Desktop CTA */}
@@ -168,6 +176,15 @@ export default function Navbar() {
                                     List Product
                                 </Link>
                             </>
+                        )}
+                        {user && user.role !== "artisan" && (
+                            <Link
+                                href="/buyer/dashboard"
+                                className="px-4 py-3 rounded-lg text-sm font-medium hover:bg-accent transition-colors"
+                                onClick={() => setMobileOpen(false)}
+                            >
+                                My Orders
+                            </Link>
                         )}
                         <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-border/50">
                             {user ? (

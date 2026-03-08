@@ -125,8 +125,7 @@ export default function HomePage() {
               <Link href="/auth?mode=register">
                 <Button
                   size="lg"
-                  variant="outline"
-                  className="rounded-full border-white/30 text-white hover:bg-white/10 px-8 text-base"
+                  className="rounded-full gradient-saffron text-white border-0 px-8 text-base font-semibold hover:opacity-90 transition-opacity animate-pulse-glow"
                 >
                   Join as Artisan
                 </Button>
@@ -395,8 +394,7 @@ export default function HomePage() {
             <Link href="/marketplace">
               <Button
                 size="lg"
-                variant="outline"
-                className="rounded-full border-white/30 text-white hover:bg-white/10 px-10 text-base"
+                className="rounded-full gradient-saffron text-white border-0 px-10 text-base font-semibold hover:opacity-90 transition-opacity animate-pulse-glow"
               >
                 Browse Crafts
               </Button>

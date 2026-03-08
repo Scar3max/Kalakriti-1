@@ -150,7 +150,7 @@ export default function MarketplacePage() {
                         ) : (
                             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                                 {filtered.map((product) => (
-                                    <Link key={product.id} href={`/product/${product.id}`} className="group block">
+                                    <Link key={product.product_id || product.id} href={`/product/${product.product_id || product.id}`} className="group block">
                                         <div className="card-hover rounded-xl overflow-hidden border border-border bg-card">
                                             <div className="relative aspect-[4/5] overflow-hidden bg-muted">
                                                 <img
