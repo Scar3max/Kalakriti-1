@@ -51,13 +51,22 @@ export default function ProductDetailPage() {
     }, [productId, router]);
 
     const handleOrder = async () => {
+        if (!user) {
+            window.location.href = "/auth";
+            return;
+        }
         setIsOrdering(true);
         try {
             const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
             const res = await fetch(`${baseUrl}/api/orders/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ product_id: productId })
+                body: JSON.stringify({
+                    product_id: productId,
+                    buyer_id: user.id,
+                    buyer_name: user.name || "Guest",
+                    buyer_email: user.email || "guest@example.com",
+                })
             });
             const data = await res.json();
             if (res.ok) {

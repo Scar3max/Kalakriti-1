@@ -18,6 +18,9 @@ export default function DashboardPage() {
     const [artisan, setArtisan] = useState<any>(null);
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isEditingProfile, setIsEditingProfile] = useState(false);
+    const [editForm, setEditForm] = useState({ name: "", craft_type: "", location: "", bio: "" });
+    const [savingProfile, setSavingProfile] = useState(false);
 
     useEffect(() => {
         const storedUser = localStorage.getItem("user");
@@ -33,6 +36,12 @@ export default function DashboardPage() {
                     if (profRes.ok) {
                         const profData = await profRes.json();
                         setArtisan(profData.profile);
+                        setEditForm({
+                            name: profData.profile.name || "",
+                            craft_type: profData.profile.craft_type || "",
+                            location: profData.profile.location || "",
+                            bio: profData.profile.bio || ""
+                        });
                     }
 
                     const prodRes = await fetch(`${baseUrl}/api/artisans/${parsedUser.id}/products`);
@@ -52,6 +61,54 @@ export default function DashboardPage() {
             window.location.href = "/auth";
         }
     }, []);
+
+    const handleProfileUpdate = async () => {
+        setSavingProfile(true);
+        try {
+            const token = localStorage.getItem("token");
+            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+            // The backend endpoint accepts state and city, let's derive them from location roughly
+            const locationParts = editForm.location.split(",");
+            const city = locationParts[0]?.trim() || "";
+            const state = locationParts[1]?.trim() || "";
+
+            const res = await fetch(`${baseUrl}/api/artisans/${user.id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { "Authorization": `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({
+                    name: editForm.name,
+                    craft_type: editForm.craft_type,
+                    bio: editForm.bio,
+                    city,
+                    state,
+                    location: editForm.location
+                })
+            });
+
+            if (res.ok) {
+                const refreshed = await fetch(`${baseUrl}/api/artisans/${user.id}`).then(r => r.json());
+                setArtisan(refreshed.profile);
+
+                // Update local storage user name
+                const updatedUser = { ...user, name: editForm.name };
+                localStorage.setItem("user", JSON.stringify(updatedUser));
+                setUser(updatedUser);
+
+                setIsEditingProfile(false);
+            } else {
+                alert("Failed to update profile");
+            }
+        } catch (error) {
+            console.error("Profile update error", error);
+            alert("An error occurred");
+        } finally {
+            setSavingProfile(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -197,36 +254,83 @@ export default function DashboardPage() {
                 {/* Profile Tab */}
                 {activeTab === "profile" && (
                     <div className="max-w-xl space-y-6">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-6 rounded-2xl border border-border bg-card shadow-sm">
-                            <div className="col-span-full sm:col-span-1">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Name</label>
-                                <p className="mt-1 font-medium">{artisan.name}</p>
-                            </div>
-                            <div className="col-span-full sm:col-span-1">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Craft Type</label>
-                                <p className="mt-1 font-medium">{artisan.craft_type}</p>
-                            </div>
-                            <div className="col-span-full sm:col-span-1">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Location</label>
-                                <p className="mt-1 font-medium">{artisan.location}</p>
-                            </div>
-                            <div className="col-span-full sm:col-span-1">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</label>
-                                <div className="mt-1">
-                                    <Badge variant="outline" className="capitalize">{artisan.verification_status}</Badge>
+                        {isEditingProfile ? (
+                            <div className="space-y-4 p-6 rounded-2xl border border-border bg-card shadow-sm">
+                                <div>
+                                    <label className="text-sm font-medium mb-1.5 block">Display Name</label>
+                                    <input
+                                        className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                                        value={editForm.name}
+                                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium mb-1.5 block">Craft Type</label>
+                                    <input
+                                        className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                                        value={editForm.craft_type}
+                                        onChange={(e) => setEditForm({ ...editForm, craft_type: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium mb-1.5 block">Location (City, State)</label>
+                                    <input
+                                        className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                                        value={editForm.location}
+                                        onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium mb-1.5 block">Bio</label>
+                                    <textarea
+                                        className="w-full flex min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                                        value={editForm.bio}
+                                        onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                                    />
+                                </div>
+                                <div className="flex justify-end gap-2 pt-4">
+                                    <Button variant="ghost" onClick={() => setIsEditingProfile(false)} disabled={savingProfile}>
+                                        Cancel
+                                    </Button>
+                                    <Button onClick={handleProfileUpdate} disabled={savingProfile} className="bg-primary text-primary-foreground">
+                                        {savingProfile ? "Saving..." : "Save Changes"}
+                                    </Button>
                                 </div>
                             </div>
-                            <div className="col-span-full">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Bio</label>
-                                <p className="mt-1 text-sm text-foreground/80 leading-relaxed">{artisan.bio}</p>
-                            </div>
-                        </div>
+                        ) : (
+                            <>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-6 rounded-2xl border border-border bg-card shadow-sm">
+                                    <div className="col-span-full sm:col-span-1">
+                                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Name</label>
+                                        <p className="mt-1 font-medium">{artisan.name}</p>
+                                    </div>
+                                    <div className="col-span-full sm:col-span-1">
+                                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Craft Type</label>
+                                        <p className="mt-1 font-medium">{artisan.craft_type}</p>
+                                    </div>
+                                    <div className="col-span-full sm:col-span-1">
+                                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Location</label>
+                                        <p className="mt-1 font-medium">{artisan.location}</p>
+                                    </div>
+                                    <div className="col-span-full sm:col-span-1">
+                                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</label>
+                                        <div className="mt-1">
+                                            <Badge variant="outline" className="capitalize">{artisan.verification_status}</Badge>
+                                        </div>
+                                    </div>
+                                    <div className="col-span-full">
+                                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Bio</label>
+                                        <p className="mt-1 text-sm text-foreground/80 leading-relaxed">{artisan.bio}</p>
+                                    </div>
+                                </div>
 
-                        <div className="flex justify-end pt-2">
-                            <Button variant="outline" className="rounded-full px-6">
-                                Edit Profile details
-                            </Button>
-                        </div>
+                                <div className="flex justify-end pt-2">
+                                    <Button variant="outline" className="rounded-full px-6" onClick={() => setIsEditingProfile(true)}>
+                                        Edit Profile details
+                                    </Button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 )}
             </div>

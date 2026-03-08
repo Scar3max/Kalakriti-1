@@ -6,18 +6,39 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 /**
- * Generic fetch wrapper with error handling.
+ * Get stored auth token from localStorage (client-side only).
+ */
+function getToken(): string | null {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("token");
+}
+
+/**
+ * Generic fetch wrapper with error handling and optional auth.
  */
 async function apiFetch<T>(
     endpoint: string,
-    options?: RequestInit
+    options?: RequestInit & { auth?: boolean }
 ): Promise<T> {
+    const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        ...(options?.headers as Record<string, string>),
+    };
+
+    // Auto-attach auth token if requested
+    if (options?.auth) {
+        const token = getToken();
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+    }
+
+    // Remove our custom 'auth' from options before passing to fetch
+    const { auth: _, ...fetchOptions } = options || {};
+
     const res = await fetch(`${API_BASE}${endpoint}`, {
-        headers: {
-            "Content-Type": "application/json",
-            ...options?.headers,
-        },
-        ...options,
+        headers,
+        ...fetchOptions,
     });
 
     if (!res.ok) {
@@ -39,8 +60,12 @@ export const authAPI = {
         location?: string;
     }) => apiFetch("/api/auth/register", { method: "POST", body: JSON.stringify(data) }),
 
+    // Fixed: send credentials as JSON body, not query params
     login: (email: string, password: string) =>
-        apiFetch(`/api/auth/login?email=${email}&password=${password}`, { method: "POST" }),
+        apiFetch<{ message: string; token: string; user: { id: string; email: string; role: string; name: string } }>(
+            "/api/auth/login",
+            { method: "POST", body: JSON.stringify({ email, password }) }
+        ),
 };
 
 // --- Products ---
@@ -64,7 +89,7 @@ export const productsAPI = {
 
     get: (id: string) => apiFetch(`/api/products/${id}`),
 
-    create: (data: { price: number; image_url?: string; audio_url?: string }) =>
+    create: (data: { artisan_id: string; price: number; image_url?: string; audio_url?: string }) =>
         apiFetch("/api/products/", { method: "POST", body: JSON.stringify(data) }),
 
     update: (id: string, data: Record<string, unknown>) =>
@@ -105,8 +130,13 @@ export const uploadAPI = {
 // --- Artisans ---
 export const artisansAPI = {
     get: (id: string) => apiFetch(`/api/artisans/${id}`),
+
+    createProfile: (data: Record<string, unknown>) =>
+        apiFetch("/api/artisans/profile", { method: "POST", body: JSON.stringify(data), auth: true }),
+
     updateProfile: (id: string, data: Record<string, unknown>) =>
-        apiFetch(`/api/artisans/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+        apiFetch(`/api/artisans/${id}`, { method: "PUT", body: JSON.stringify(data), auth: true }),
+
     getProducts: (id: string) => apiFetch(`/api/artisans/${id}/products`),
 };
 
@@ -114,6 +144,7 @@ export const artisansAPI = {
 export const ordersAPI = {
     place: (data: {
         product_id: string;
+        buyer_id?: string;
         buyer_name: string;
         buyer_email: string;
         buyer_phone?: string;

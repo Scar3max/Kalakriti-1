@@ -42,7 +42,9 @@ export default function MarketplacePage() {
     const filtered = products.filter((p) => {
         const matchSearch = !search || p.title?.toLowerCase().includes(search.toLowerCase()) || p.artisans?.name?.toLowerCase().includes(search.toLowerCase());
         const matchCategory = selectedCategory === "All" || p.category === selectedCategory;
-        const matchRegion = selectedRegion === "All"; // Simplify region matching since we might not have it in MVP or we can match on artisan location
+        // Region filter: match against artisan location or craft_type
+        const artisanLocation = (p.artisans?.location || "").toLowerCase();
+        const matchRegion = selectedRegion === "All" || artisanLocation.includes(selectedRegion.toLowerCase());
         return matchSearch && matchCategory && matchRegion;
     });
 
