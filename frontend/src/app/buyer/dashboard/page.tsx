@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { API_BASE } from "@/lib/api";
 
 export default function BuyerDashboardPage() {
     const router = useRouter();
@@ -28,11 +29,9 @@ export default function BuyerDashboardPage() {
 
         setUser(parsedUser);
 
-        // Fetch Buyer Orders
         const fetchOrders = async () => {
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
             try {
-                const res = await fetch(`${baseUrl}/api/orders/buyer/${parsedUser.id}`);
+                const res = await fetch(`${API_BASE}/api/orders/buyer/${parsedUser.id}`);
                 if (res.ok) {
                     const data = await res.json();
                     setOrders(data.orders || []);

@@ -3,7 +3,7 @@
  * All API calls are centralized here.
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 /**
  * Get stored auth token from localStorage (client-side only).

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { API_BASE } from "@/lib/api";
 
 /**
  * Product detail page — shows image, description, cultural story,
@@ -167,8 +168,7 @@ function OrderModal({
                 onSuccess(`DEMO-${Date.now()}`);
                 return;
             }
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-            const res = await fetch(`${baseUrl}/api/orders/`, {
+            const res = await fetch(`${API_BASE}/api/orders/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -361,8 +361,7 @@ export default function ProductDetailPage() {
 
             // 2. Fetch from backend API
             try {
-                const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-                const res = await fetch(`${baseUrl}/api/products/${productId}`);
+                const res = await fetch(`${API_BASE}/api/products/${productId}`);
                 if (res.ok) {
                     const data = await res.json();
                     setProduct(data.product);

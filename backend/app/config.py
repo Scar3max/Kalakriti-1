@@ -17,7 +17,7 @@ class Settings:
     DEBUG: bool = os.getenv("DEBUG", "true").lower() == "true"
     API_VERSION: str = "v1"
     CORS_ORIGINS: list[str] = os.getenv(
-        "CORS_ORIGINS", "http://localhost:3000"
+        "CORS_ORIGINS", "*"
     ).split(",")
 
     # --- Supabase ---

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { API_BASE } from "@/lib/api";
 
 /**
  * Auth page — Login / Register with role selection.
@@ -34,13 +35,11 @@ function AuthContent() {
 
         try {
             const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
             const payload = mode === "login"
                 ? { email, password }
                 : { email, password, name, role, phone };
 
-            const res = await fetch(`${baseUrl}${endpoint}`, {
+            const res = await fetch(`${API_BASE}${endpoint}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
@@ -60,7 +59,7 @@ function AuthContent() {
                 // Redirect based on role
                 if (data.user.role === "artisan") {
                     try {
-                        const profRes = await fetch(`${baseUrl}/api/artisans/${data.user.id}`);
+                        const profRes = await fetch(`${API_BASE}/api/artisans/${data.user.id}`);
                         if (profRes.ok) {
                             window.location.href = "/artisan/dashboard";
                         } else {

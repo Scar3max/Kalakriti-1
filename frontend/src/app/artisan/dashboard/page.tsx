@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { API_BASE } from "@/lib/api";
 
 /**
  * Artisan Dashboard — View all products, profile summary,
@@ -29,11 +30,9 @@ export default function DashboardPage() {
             const parsedUser = JSON.parse(storedUser);
             setUser(parsedUser);
 
-            // Fetch Artisan Profile & Products
             const fetchData = async () => {
-                const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
                 try {
-                    const profRes = await fetch(`${baseUrl}/api/artisans/${parsedUser.id}`);
+                    const profRes = await fetch(`${API_BASE}/api/artisans/${parsedUser.id}`);
                     if (profRes.ok) {
                         const profData = await profRes.json();
                         setArtisan(profData.profile);
@@ -45,13 +44,13 @@ export default function DashboardPage() {
                         });
                     }
 
-                    const prodRes = await fetch(`${baseUrl}/api/artisans/${parsedUser.id}/products`);
+                    const prodRes = await fetch(`${API_BASE}/api/artisans/${parsedUser.id}/products`);
                     if (prodRes.ok) {
                         const prodData = await prodRes.json();
                         setProducts(prodData.products || []);
                     }
 
-                    const ordRes = await fetch(`${baseUrl}/api/orders/artisan/${parsedUser.id}`);
+                    const ordRes = await fetch(`${API_BASE}/api/orders/artisan/${parsedUser.id}`);
                     if (ordRes.ok) {
                         const ordData = await ordRes.json();
                         setOrders(ordData.orders || []);
@@ -73,14 +72,13 @@ export default function DashboardPage() {
         setSavingProfile(true);
         try {
             const token = localStorage.getItem("token");
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
             // The backend endpoint accepts state and city, let's derive them from location roughly
             const locationParts = editForm.location.split(",");
             const city = locationParts[0]?.trim() || "";
             const state = locationParts[1]?.trim() || "";
 
-            const res = await fetch(`${baseUrl}/api/artisans/${user.id}`, {
+            const res = await fetch(`${API_BASE}/api/artisans/${user.id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -97,7 +95,7 @@ export default function DashboardPage() {
             });
 
             if (res.ok) {
-                const refreshed = await fetch(`${baseUrl}/api/artisans/${user.id}`).then(r => r.json());
+                const refreshed = await fetch(`${API_BASE}/api/artisans/${user.id}`).then(r => r.json());
                 setArtisan(refreshed.profile);
 
                 // Update local storage user name

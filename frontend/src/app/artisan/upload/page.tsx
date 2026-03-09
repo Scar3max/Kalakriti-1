@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { API_BASE } from "@/lib/api";
 
 /**
  * Upload Product Page — Full artisan listing workflow:
@@ -106,12 +107,11 @@ export default function UploadPage() {
     const handleGenerate = useCallback(async () => {
         setIsGenerating(true);
         try {
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
             // 1. Upload Image
             const formDataImage = new FormData();
             formDataImage.append("file", imageFile!);
-            const imgRes = await fetch(`${baseUrl}/api/upload/image`, {
+            const imgRes = await fetch(`${API_BASE}/api/upload/image`, {
                 method: "POST",
                 body: formDataImage,
             });
@@ -123,7 +123,7 @@ export default function UploadPage() {
             if (audioBlob) {
                 const formDataAudio = new FormData();
                 formDataAudio.append("file", audioBlob, "recording.webm");
-                const audioRes = await fetch(`${baseUrl}/api/upload/audio`, {
+                const audioRes = await fetch(`${API_BASE}/api/upload/audio`, {
                     method: "POST",
                     body: formDataAudio,
                 });
@@ -136,7 +136,7 @@ export default function UploadPage() {
             const userStr = localStorage.getItem("user");
             const artisan_id = userStr ? JSON.parse(userStr).id : "dummy-artisan-id";
 
-            const prodRes = await fetch(`${baseUrl}/api/products/`, {
+            const prodRes = await fetch(`${API_BASE}/api/products/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -153,7 +153,7 @@ export default function UploadPage() {
             setProductId(newProductId);
 
             // 4. Trigger AI Generation
-            const aiRes = await fetch(`${baseUrl}/api/products/${newProductId}/generate`, {
+            const aiRes = await fetch(`${API_BASE}/api/products/${newProductId}/generate`, {
                 method: "POST",
             });
             const aiData = await aiRes.json();
@@ -178,8 +178,7 @@ export default function UploadPage() {
     const handlePublish = useCallback(async () => {
         if (!productId) return;
         try {
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-            const res = await fetch(`${baseUrl}/api/products/${productId}/publish`, {
+            const res = await fetch(`${API_BASE}/api/products/${productId}/publish`, {
                 method: "POST",
             });
             if (!res.ok) {

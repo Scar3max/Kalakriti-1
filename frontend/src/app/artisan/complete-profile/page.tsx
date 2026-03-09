@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { API_BASE } from "@/lib/api";
 
 export default function CompleteProfilePage() {
     const router = useRouter();
@@ -33,8 +34,7 @@ export default function CompleteProfilePage() {
             const token = localStorage.getItem("token");
             if (!token) throw new Error("Not authenticated");
 
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-            const res = await fetch(`${baseUrl}/api/artisans/profile`, {
+            const res = await fetch(`${API_BASE}/api/artisans/profile`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
